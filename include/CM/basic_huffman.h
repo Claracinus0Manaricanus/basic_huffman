@@ -1,0 +1,4 @@
+#ifndef CM_BASIC_HUFFMAN_HEADER
+#define CM_BASIC_HUFFMAN_HEADER
+
+#endif
