@@ -7,21 +7,15 @@
 typedef struct HuffmanNode {
   uint8_t data;
 
-  HuffmanNode *left;
-  HuffmanNode *right;
+  struct HuffmanNode *left;
+  struct HuffmanNode *right;
 } HuffmanNode;
 
 /* for ease of return and distinction */
-typedef struct CompressedData {
+typedef struct ArrayData {
   uint8_t *data;
   uint32_t data_size;
-} CompressedData;
-
-/* for ease of return and distinction */
-typedef struct UncompressedData {
-  uint8_t *data;
-  uint32_t data_size;
-} UncompressedData;
+} ArrayData;
 
 /**
  * @brief compresses given data with huffman coding
@@ -33,9 +27,9 @@ typedef struct UncompressedData {
  * @param data the data to be compressed
  * @param data_size size of the data to be compressed
  *
- * @see UncompressedData uncompressWithHuffman();
+ * @see ArrayData uncompressWithHuffman();
  */
-CompressedData compressWithHuffman(uint8_t *data, uint32_t data_size);
+ArrayData compressWithHuffman(uint8_t *data, uint32_t data_size);
 
 /**
  * @brief uncompresses data compressed by compressWithHuffman
@@ -43,8 +37,8 @@ CompressedData compressWithHuffman(uint8_t *data, uint32_t data_size);
  * @param data is data to be uncompressed
  * @param data_size is the size of the data to be uncompressed
  *
- * @see CompressedData compressWithHuffman();
+ * @see ArrayData compressWithHuffman();
  */
-UncompressedData uncompressWithHuffman(uint8_t *data, uint32_t data_size);
+ArrayData uncompressWithHuffman(uint8_t *data, uint32_t data_size);
 
 #endif
