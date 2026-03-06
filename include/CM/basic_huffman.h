@@ -3,19 +3,9 @@
 
 #include <stdint.h>
 
-/* huffman node */
-typedef struct HuffmanNode {
-  uint8_t data;
-
-  struct HuffmanNode *left;
-  struct HuffmanNode *right;
-} HuffmanNode;
-
-/* for ease of return and distinction */
-typedef struct ArrayData {
-  uint8_t *data;
-  uint32_t data_size;
-} ArrayData;
+/**
+ * anyhting not relevant to the header is in cpp
+ */
 
 /**
  * @brief compresses given data with huffman coding
@@ -29,7 +19,8 @@ typedef struct ArrayData {
  *
  * @see ArrayData uncompressWithHuffman();
  */
-ArrayData compressWithHuffman(uint8_t *data, uint32_t data_size);
+uint8_t *compressWithHuffman(uint8_t *data, uint32_t data_size,
+                             uint32_t *out_size);
 
 /**
  * @brief uncompresses data compressed by compressWithHuffman
@@ -39,6 +30,7 @@ ArrayData compressWithHuffman(uint8_t *data, uint32_t data_size);
  *
  * @see ArrayData compressWithHuffman();
  */
-ArrayData uncompressWithHuffman(uint8_t *data, uint32_t data_size);
+uint8_t *uncompressWithHuffman(uint8_t *data, uint32_t data_size,
+                               uint32_t *out_size);
 
 #endif
