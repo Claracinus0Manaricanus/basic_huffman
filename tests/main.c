@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 int main(int argc, char **argv) {
-  const uint32_t arr_len = 16384;
+  const uint32_t arr_len = 16;
   uint32_t arr[arr_len];
 
   for (int i = 0; i < arr_len; i++)

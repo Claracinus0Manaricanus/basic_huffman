@@ -75,6 +75,7 @@ void finalizeBitWrite() {
     compressed_data[current_size] = (13 - current_byte_bit_len);
     current_size++;
   }
+  compressed_data_len = current_size;
 }
 
 void writeHuffmanTree(HuffmanNode *node, int depth) {
@@ -91,6 +92,34 @@ void writeHuffmanTree(HuffmanNode *node, int depth) {
       writeBit((node->data >> i) & 1);
     }
   }
+}
+
+int readBit() {
+  if (current_size == compressed_data_len)
+    return -1;
+
+  if (current_size >= compressed_data_len - 2) {
+    int to_skip = (compressed_data[compressed_data_len - 1] & 0x7);
+    int left_to_read = ((compressed_data_len - current_size - 1) ? 13 : 5) -
+                       current_byte_bit_len;
+    if (left_to_read <= to_skip) {
+      current_size = compressed_data_len;
+      return -1;
+    }
+  }
+
+  int bit = (compressed_data[current_size] >> (7 - current_byte_bit_len)) & 1;
+  current_byte_bit_len++;
+
+  if (current_byte_bit_len == 8) {
+    current_byte_bit_len = 0;
+    current_size++;
+  }
+
+  return bit;
+}
+
+int readHuffmanTree() {
 }
 
 uint8_t *compressWithHuffman(uint8_t *data, uint32_t data_size,
@@ -151,6 +180,9 @@ uint8_t *compressWithHuffman(uint8_t *data, uint32_t data_size,
   HuffmanCode *codes = getCodes(root->data);
   compressed_data_len = (data_size / 10) * 6;
   compressed_data = malloc(compressed_data_len);
+  current_byte_bit_len = 0; // should be 0 init
+  current_size = 0;         // in bytes
+  current_byte = 0;         // should be 0 init
 
   /* adding huffman tree to the beginning */
   writeHuffmanTree(root->data, 0);
@@ -165,6 +197,10 @@ uint8_t *compressWithHuffman(uint8_t *data, uint32_t data_size,
 
   finalizeBitWrite();
 
+  current_byte_bit_len = 0; // should be 0 init
+  current_size = 0;         // in bytes
+  current_byte = 0;         // should be 0 init
+
   /* cleaning */
   if (getTree != NULL) {
     *getTree = root->data;
@@ -174,7 +210,7 @@ uint8_t *compressWithHuffman(uint8_t *data, uint32_t data_size,
   }
   freeCodes(codes);
 
-  (*out_size) = current_size;
+  (*out_size) = compressed_data_len;
   return compressed_data;
 }
 
