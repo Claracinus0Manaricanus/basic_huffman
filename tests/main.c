@@ -1,39 +1,87 @@
 #include <CM/basic_huffman.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 int main(int argc, char **argv) {
-  const uint32_t arr_len = 16;
-  uint32_t arr[arr_len];
-
-  for (int i = 0; i < arr_len; i++)
-    arr[i] = i + 1;
-
-  uint8_t *data = (uint8_t *)arr;
-  uint32_t data_size = arr_len * 4;
-
-  uint32_t returned_size = 0;
-  HuffmanNode *hroot;
-  uint8_t *compressed_data =
-      compressWithHuffman(data, data_size, &returned_size, &hroot);
-
-  HuffmanCode *codes = getCodes(hroot);
-
-  for (int i = 0; i < 256; i++) {
-    if (codes[i].code_len == 0)
-      continue;
-
-    printf("data:  %x \tcodeLen:  %d\tcode:  ", i, codes[i].code_len);
-    for (int j = 0; j < codes[i].code_len; j++) {
-      printf("%c ", ((codes[i].code[j / 32] >> (j % 32)) & 1) ? '1' : '0');
-    }
-    printf("\n");
+  if (argc != 3) {
+    printf("usage: %s <c for compression or d for decompression> "
+           "<filename>\nCompression example: %s c file.txt\nThis example "
+           "outputs the file: file.txt.cmhuff",
+           argv[0], argv[0]);
   }
 
-  printf("compresssed %d bytes to %d bytes\n%.1f%% of original filesize\n",
-         data_size, returned_size,
-         100.0f * (float)returned_size / (float)data_size);
+  FILE *file = fopen(argv[2], "r");
+  if (file == NULL) {
+    printf("ERROR: couldn't open file %s\n", argv[2]);
+    return 1;
+  }
 
-  freeCodes(codes);
-  freeTree(hroot);
+  fseek(file, 0, SEEK_END);
+  size_t filesize = ftell(file);
+  rewind(file);
+
+  uint8_t *data = malloc(filesize);
+  fread(data, 1, filesize, file);
+  fclose(file);
+
+  uint8_t *processed_data = NULL;
+  uint32_t processed_data_len = 0;
+
+  char outFileName[strlen(argv[2]) + 8];
+
+  switch (argv[1][0]) {
+  case 'c':
+    processed_data =
+        compressWithHuffman(data, filesize, &processed_data_len, NULL);
+    if (processed_data == NULL) {
+      free(data);
+      printf("ERROR: failed compression\n");
+      return 1;
+    }
+
+    printf("compressed file from %ld bytes to %d bytes\n%.1f%% of filesize\n",
+           filesize, processed_data_len,
+           100.0f * (float)processed_data_len / (float)filesize);
+
+    sprintf(outFileName, "%s.cmhuff", argv[2]);
+    break;
+  case 'd':
+    processed_data = uncompressWithHuffman(data, filesize, &processed_data_len);
+    if (processed_data == NULL) {
+      free(data);
+      printf("ERROR: failed decompression\n");
+      return 1;
+    }
+
+    printf("decompressed file from %ld bytes to %d bytes\n%.1f%% of filesize\n",
+           filesize, processed_data_len,
+           100.0f * (float)processed_data_len / (float)filesize);
+
+    int i = 0;
+    for (; i < strlen(argv[2]); i++) {
+      if (argv[2][i] == '.')
+        break;
+
+      outFileName[i] = argv[2][i];
+    }
+
+    outFileName[i] = 0;
+    break;
+  }
+
+  FILE *ofile = fopen(outFileName, "w");
+  if (ofile == NULL) {
+    printf("ERROR: failed writing to file %s\n", outFileName);
+    free(data);
+    free(processed_data);
+    return 1;
+  }
+
+  fwrite(processed_data, 1, processed_data_len, ofile);
+  fclose(ofile);
+
+  free(data);
+  free(processed_data);
   return 0;
 }

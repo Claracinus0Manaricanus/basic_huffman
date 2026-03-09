@@ -5,7 +5,8 @@
 
 #define _Nullable
 
-/* huffman node, left branch is a 0 right branch is a 1 */
+/* huffman node, left branch is a 0 right branch is a 1. Huffman tree is a
+ * strictly full binary tree. */
 typedef struct HuffmanNode {
   uint8_t data;
 

@@ -13,6 +13,8 @@ ListNode *priorityInsert(ListNode *root, ListNode *toInsert) {
   if (root == NULL)
     return toInsert;
 
+  toInsert->next = NULL;
+
   if (toInsert->count < root->count) {
     toInsert->next = root;
     return toInsert;
@@ -119,7 +121,26 @@ int readBit() {
   return bit;
 }
 
-int readHuffmanTree() {
+HuffmanNode *readHuffmanNode() {
+  HuffmanNode *node = malloc(sizeof(HuffmanNode));
+  if (readBit() == 1) {
+    node->left = NULL;
+    node->right = NULL;
+    node->data = 0;
+    for (int i = 0; i < 8; i++) {
+      node->data = (node->data << 1) | readBit();
+    }
+  } else {
+    node->data = 0;
+    node->left = readHuffmanNode();
+    node->right = readHuffmanNode();
+  }
+
+  return node;
+}
+
+HuffmanNode *readHuffmanTree() {
+  return readHuffmanNode();
 }
 
 uint8_t *compressWithHuffman(uint8_t *data, uint32_t data_size,
@@ -132,6 +153,7 @@ uint8_t *compressWithHuffman(uint8_t *data, uint32_t data_size,
     counts[data[i]]++;
 
   /* priority queue creation */
+  ListNode *node = root;
   for (int i = 0; i < 256; i++) {
     if (counts[i] == 0)
       continue;
@@ -178,6 +200,7 @@ uint8_t *compressWithHuffman(uint8_t *data, uint32_t data_size,
 
   /* compressing data according to tree */
   HuffmanCode *codes = getCodes(root->data);
+
   compressed_data_len = (data_size / 10) * 6;
   compressed_data = malloc(compressed_data_len);
   current_byte_bit_len = 0; // should be 0 init
@@ -197,17 +220,13 @@ uint8_t *compressWithHuffman(uint8_t *data, uint32_t data_size,
 
   finalizeBitWrite();
 
-  current_byte_bit_len = 0; // should be 0 init
-  current_size = 0;         // in bytes
-  current_byte = 0;         // should be 0 init
-
   /* cleaning */
   if (getTree != NULL) {
     *getTree = root->data;
   } else {
     freeTree(root->data);
-    free(root);
   }
+  free(root);
   freeCodes(codes);
 
   (*out_size) = compressed_data_len;
@@ -216,6 +235,69 @@ uint8_t *compressWithHuffman(uint8_t *data, uint32_t data_size,
 
 uint8_t *uncompressWithHuffman(uint8_t *data, uint32_t data_size,
                                uint32_t *out_size) {
+  if (data_size == 0)
+    return NULL;
+
+  compressed_data = data;
+  compressed_data_len = data_size;
+  current_byte = 0;
+  current_byte_bit_len = 0;
+  current_size = 0;
+
+  HuffmanNode *root = readHuffmanTree();
+
+  uint32_t uncompressed_size = compressed_data_len * 2;
+  uint8_t *uncompressed_data = (uint8_t *)malloc(uncompressed_size);
+  uint32_t current_uncompressed_size = 0;
+
+  int bit = 0;
+  HuffmanNode *current_node = root;
+
+  while ((bit = readBit()) != -1) {
+    /* checking if she is legal */
+    if (current_node->left == NULL) {
+      uncompressed_data[current_uncompressed_size] = current_node->data;
+      current_uncompressed_size++;
+
+      if (current_uncompressed_size >= uncompressed_size) {
+        uncompressed_size += data_size;
+        uncompressed_data = realloc(uncompressed_data, uncompressed_size);
+      }
+
+      current_node = root;
+    }
+
+    /* he is a leftist */
+    if (bit == 0) {
+      current_node = current_node->left;
+    }
+    /* he is a rightist */
+    else {
+      current_node = current_node->right;
+    }
+  }
+  /* checking if she is legal */
+  if (current_node->left == NULL) {
+    uncompressed_data[current_uncompressed_size] = current_node->data;
+    current_uncompressed_size++;
+
+    if (current_uncompressed_size >= uncompressed_size) {
+      uncompressed_size += data_size;
+      uncompressed_data = realloc(uncompressed_data, uncompressed_size);
+    }
+
+    current_node = root;
+  } else {
+    free(uncompressed_data);
+    return NULL;
+  }
+
+  uncompressed_size = current_uncompressed_size;
+  uncompressed_data = realloc(uncompressed_data, uncompressed_size);
+  (*out_size) = uncompressed_size;
+
+  freeTree(root);
+  return uncompressed_data;
 }
 
 void getCodesHelper(HuffmanNode *node, HuffmanCode *codeArr,
