@@ -1,6 +1,6 @@
 # What
 
-A basic implementation of huffman coding, tests has an example usage of the implementation. This is a library so you can use it in your own projects for huffman compression.
+A basic implementation of huffman coding that only uses c standard library, tests has an example usage of the implementation. This is a library so you can use it in your own projects for huffman compression.
 
 # Build
 
