@@ -68,6 +68,10 @@ int main(int argc, char **argv) {
 
     outFileName[i] = 0;
     break;
+  default:
+    printf("ERROR: invalid operation, must be c or d\n");
+    free(data);
+    return 1;
   }
 
   FILE *ofile = fopen(outFileName, "w");
